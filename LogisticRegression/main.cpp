@@ -7,8 +7,8 @@
 #include <xtensor-blas/xlinalg.hpp>
 #include <cmath>
 
-#include "../../metrics/accuracy_score.hpp"
-#include "../../selection/train_val_split.hpp"
+#include "../metrics/accuracy_score.hpp"
+#include "../selection/train_val_split.hpp"
 #include "LogisticRegression.hpp"
 
 int main() {
