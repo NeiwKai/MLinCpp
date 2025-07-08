@@ -1,4 +1,4 @@
 Default:
-	g++ -o main main.cpp
+	g++ -o main main.cpp -lopenblas
 run:
-	g++ -o main main.cpp && ./main
+	g++ -o main main.cpp -lopenblas && ./main

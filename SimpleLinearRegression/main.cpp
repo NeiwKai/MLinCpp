@@ -1,138 +1,35 @@
 #include <iostream>
-#include <stdio.h>
 #include <vector>
+#include <xtensor.hpp>
+#include <xtensor-blas/xlinalg.hpp>
+#include <cmath>
 
-class regression {
-  std::vector<float> x;
-  std::vector<float> y;
-
-  float coeff;
-  float constTerm;
-  float sum_xy;
-  float sum_x;
-  float sum_y;
-  float sum_x_square;
-  float sum_y_square;
-public:
-  regression() {
-    this->coeff = 0;
-    this->constTerm = 0;
-    this->sum_xy = 0;
-    this->sum_x = 0;
-    this->sum_y = 0;
-    this->sum_x_square = 0;
-    this->sum_y_square = 0;
-  }
-  void calculateCoefficient() {
-    float N = x.size();
-    float numerator = (N * this->sum_xy - this->sum_x * this->sum_y);
-    float denominator = (N * this->sum_x_square - this->sum_x * this->sum_x);
-    this->coeff = numerator / denominator;
-  }
-  void calculateConstantTerm() {
-    float N = this->x.size();
-    float numerator = (this->sum_y * this->sum_x_square - this->sum_x * this->sum_xy);
-    float denominator = (N * this->sum_x_square - this->sum_x * this->sum_x);
-    this->constTerm = numerator / denominator;
-  }
-  int sizeOfData() {
-    return this->x.size();
-  }
-  float coefficient() {
-    if (this->coeff == 0) {
-      this->calculateCoefficient();
-    }
-    return this->coeff;
-  }
-  float constant() {
-    if (this->constTerm == 0) {
-      this->calculateConstantTerm();
-    }
-    return this->constTerm;
-  }
-  void PrintBestFittingLine() {
-    if (this->coeff == 0 && this->constTerm == 0) {
-      this->calculateCoefficient();
-      this->calculateConstantTerm();
-    }
-    std::cout << "The best fitting line is y = " << this->coeff << "x + " << this->constTerm << std::endl;
-  }
-  void takeInput(int n) {
-    for (int i=0; i<n; i++) {
-      char comma;
-      float xi;
-      float yi;
-      std::cin >> xi >> comma >> yi;
-      this->sum_xy += xi * yi;
-      this->sum_x += xi;
-      this->sum_y += yi;
-      this->sum_x_square += xi * xi;
-      this->sum_y_square += yi * yi;
-      this->x.push_back(xi);
-      this->y.push_back(yi);
-    }
-  }
-  void showData() {
-    for (int i=0; i<62; i++) {
-      printf("_");
-    }
-    printf("\n\n");
-    printf("|%15s%5s %15s%5s%20s\n", "X", "", "Y", "", "|");
-    for (int i=0; i<this->x.size(); i++) {
-      printf("|%20f %20f%20s\n", this->x[i], this->y[i], "|");
-    }
-    for (int i=0; i<62; i++) {
-      printf("_");
-    }
-    printf("\n");
-  }
-  float predict(float x) {
-    return this->coeff * x + this->constTerm;
-  }
-  float errorSquare() {
-    float ans = 0;
-    for (int i=0; i<this->x.size(); i++) {
-      ans += ((this->predict(this->x[i] - this->y[i]) * (this->predict(this->x[i]) - this->y[i])));
-    }
-    return ans;
-  }
-  float errorIn(float num) {
-    for (int i=0; i<this->x.size(); i++) {
-      if (num == this->x[i]) {
-        return (this->y[i] - this->predict(this->x[i]));
-      }
-    }
-    return 0;
-  }
-};
+#include "../metrics/mean_square_error.hpp"
+#include "../metrics/root_mean_square_error.hpp"
+#include "../metrics/mean_absolute_error.hpp"
+#include "../metrics/r2_score.hpp"
+#include "../selection/train_val_split.hpp"
+#include "SimpleLinearRegression.hpp"
 
 int main() {
-  std::freopen("input.txt", "r", stdin);
-  regression reg;
+  xt::random::seed(42);
+  xt::xarray<double> X = xt::random::randn<double>({100}, 0.0, 1.0);
+  xt::xarray<double> Y = xt::random::randint<int>({100}, 0, 2);
 
-  int n;
-  std::cin >> n;
+  auto [X_train, X_val, Y_train, Y_val] = train_val_split(X, Y, 0.2, 42);
 
-  reg.takeInput(n);
-  reg.PrintBestFittingLine();
-  std::cout << "Predicted value at 2600 = " << reg.predict(2060) << std::endl;
-  std::cout << "The errorSquared = " << reg.errorSquare() << std::endl;
-  std::cout << "Error in 2050 = " << reg.errorIn(2050) << std::endl;
+  SimpleLinearRegression slr(0.01);
+  slr.fit(X_train, Y_train);
+
+  xt::xarray<double> Y_pred = slr.predict(X_val);
+  double mse = mean_square_error(Y_val, Y_pred);
+  double rmse = root_mean_square_error(Y_val, Y_pred);
+  double mae = mean_absolute_error(Y_val, Y_pred);
+  double r2 = r2_score(Y_val, Y_pred);
+
+  std::cout << "MSE:  " << mse << "\n";
+  std::cout << "RMSE: " << rmse << "\n";
+  std::cout << "MAE:  " << mae << "\n";
+  std::cout << "R²:   " << r2 << "\n";
   return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
