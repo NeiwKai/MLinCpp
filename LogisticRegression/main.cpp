@@ -22,8 +22,8 @@ int main() {
   LogisticRegression lr(0.01, 1000);
   lr.fit(X_train, Y_train);
   xt::xarray<double> Y_pred = lr.predict(X_val);
-  std::cout << Y_pred << std::endl;
-  std::cout << "Accuracy: " << accuracy_score(Y_val, Y_pred);
+  //std::cout << Y_pred << "\n";
+  std::cout << "Accuracy: " << accuracy_score(Y_val, Y_pred) << "\n";
 
   return 0;
 }
